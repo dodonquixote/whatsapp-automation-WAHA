@@ -1,0 +1,45 @@
+services:
+  waha:
+    image: devlikeapro/waha
+    container_name: waha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      - WAHA_PRINT_QR=True
+      - WAHA_API_KEY=${WAHA_API_KEY}
+      - WAHA_USERNAME=${USERNAME}
+      - WAHA_PASSWORD=${PASSWORD}
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: wa-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - WAHA_URL=http://waha:3000
+      - WAHA_SESSION=${WAHA_SESSION}
+    depends_on:
+      - waha
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: wa-dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - STREAMLIT_SERVER_HEADLESS=true
+    depends_on:
+      - backend
+

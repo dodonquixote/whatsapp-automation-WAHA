@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WA Blast Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/static/favicon.ico">
+</head>
+<body>
+
+<!-- ============================
+     SIDEBAR
+     ============================ -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">📲</div>
+    <div>
+      <div class="brand-title">WA Blast</div>
+      <div class="brand-sub">Dashboard v1.0</div>
+    </div>
+  </div>
+
+  <!-- Session Status -->
+  <div class="sidebar-section">
+    <div class="section-label">Status Sesi</div>
+    <span id="status-badge" class="status-badge stopped">
+      <span class="dot"></span>Terputus
+    </span>
+
+    <div id="user-info" class="user-info hidden">
+      <div>Terhubung sebagai:</div>
+      <div id="user-name" class="user-name">—</div>
+      <div id="user-number" class="user-meta"></div>
+      <div id="user-id" class="user-id"></div>
+      <div id="user-business" class="user-meta"></div>
+    </div>
+  </div>
+
+  <!-- Session Buttons -->
+  <div class="sidebar-section">
+    <div class="section-label">Aksi Sesi</div>
+    <button id="btn-start" class="btn btn-success">▶ Mulai Sesi</button>
+    <button id="btn-logout" class="btn btn-danger hidden">⏏ Logout Sesi</button>
+    <button id="btn-qr" class="btn btn-ghost">↻ Refresh QR</button>
+  </div>
+
+  <!-- QR Code -->
+  <div id="qr-section" class="sidebar-section">
+    <div class="section-label">QR Code</div>
+    <div class="qr-container">
+      <div class="qr-frame">
+        <img id="qr-img" class="hidden" alt="QR Code WhatsApp">
+        <div id="qr-placeholder" class="qr-placeholder">
+          <span class="qr-icon">⬜</span>
+          <span>QR akan tampil<br>setelah sesi dimulai</span>
+        </div>
+      </div>
+      <div class="qr-label">Scan dengan WhatsApp<br>untuk menghubungkan</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================
+     OVERLAY (mobile)
+     ============================ -->
+<div id="overlay"></div>
+
+<!-- ============================
+     MAIN CONTENT
+     ============================ -->
+<div id="main">
+
+  <!-- Topbar / Tabs -->
+  <header id="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">☰</button>
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="dynamic" role="tab" aria-selected="true">
+        🚀 Dynamic Blast
+      </button>
+      <!-- <button class="tab-btn" data-tab="csv" disabled role="tab" aria-selected="false">
+        📁 CSV Blast
+        <span class="tab-badge">SEGERA</span>
+      </button>
+      <button class="tab-btn" data-tab="outreach" disabled role="tab" aria-selected="false">
+        🎯 Outreach
+        <span class="tab-badge">SEGERA</span>
+      </button>
+      <button class="tab-btn" data-tab="simple" disabled role="tab" aria-selected="false">
+        📨 Simple Blast
+        <span class="tab-badge">SEGERA</span>
+      </button> -->
+    </nav>
+  </header>
+
+  <!-- Content Area -->
+  <main id="content">
+
+    <!-- ─── Tab: Dynamic Blast ─── -->
+    <section id="tab-dynamic" class="tab-pane active">
+
+      <!-- 1. File Upload -->
+      <div class="form-section">
+        <div class="form-section-header">
+          <div class="section-icon">📂</div>
+          <h3>Upload File Kontak</h3>
+        </div>
+        <div class="form-section-body">
+          <div id="drop-zone" class="drop-zone">
+            <input type="file" id="file-input" accept=".csv,.xlsx,.xls">
+            <span id="dz-icon" class="dz-icon">📤</span>
+            <div id="dz-title" class="dz-title">Seret & lepas file, atau klik untuk memilih</div>
+            <div class="dz-sub">Didukung: .csv, .xlsx, .xls</div>
+            <div id="dz-file-name" class="dz-file-name hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Headers Preview -->
+      <div id="headers-section" class="form-section hidden">
+        <div class="form-section-header">
+          <div class="section-icon">📋</div>
+          <h3>Pratinjau Headers & Data</h3>
+        </div>
+        <div class="form-section-body">
+          <div class="info-row">
+            <span class="info-label">Headers:</span>
+            <span class="info-value" id="header-chips"></span>
+          </div>
+          <div class="drag-hint">⠿ Seret header ke kolom template untuk menyisipkan placeholder</div>
+            <div class="info-row">
+              <span class="info-label">Kolom penerima:</span>
+              <div class="info-value">
+                <div id="recipient-target" class="recipient-target" tabindex="0">Drop header di sini</div>
+              </div>
+            </div>
+          <div class="info-row">
+            <span class="info-label">Total baris:</span>
+            <span class="info-value text-mono" id="row-count">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Sampel baris pertama:</span>
+            <span class="info-value text-mono" id="sample-data">—</span>
+          </div>
+            <div id="recipient-alert" class="alert alert-error hidden"></div>
+        </div>
+      </div>
+
+      <!-- 3. Template Pesan -->
+      <div class="form-section">
+        <div class="form-section-header">
+          <div class="section-icon">✍️</div>
+          <h3>Template Pesan</h3>
+        </div>
+        <div class="form-section-body">
+          <div class="form-group">
+            <label for="template-input">Isi Template</label>
+            <textarea
+              id="template-input"
+              placeholder="Contoh:&#10;Halo {{username}} 👋&#10;&#10;Produk: {{product}}&#10;Campaign: {{campaign}}&#10;&#10;Info lengkap: {{link_group}}"
+              rows="7"
+            ></textarea>
+            <div id="template-drop-hint" class="template-drop-hint hidden">
+              🎯 Lepaskan untuk menyisipkan placeholder di posisi kursor
+            </div>
+            <div style="margin-top: 8px;">
+              <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px; font-family:var(--font-mono);">Placeholder terdeteksi:</div>
+              <div id="placeholder-list" class="placeholder-chips">
+                <span class="text-muted text-xs text-mono">Belum ada placeholder terdeteksi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Additional Fields -->
+      <div class="form-section">
+        <div class="form-section-header">
+          <div class="section-icon">⚙️</div>
+          <h3>Additional Fields (Global)</h3>
+        </div>
+        <div class="form-section-body">
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">
+            Tambah nilai global yang tersedia di template (misal: <span class="text-mono" style="color:var(--accent)">{{campaign}}</span>, <span class="text-mono" style="color:var(--accent)">{{link_group}}</span>)
+          </p>
+          <div id="field-list" class="field-list"></div>
+          <button id="btn-add-field" class="btn btn-ghost btn-sm" style="width:auto;">
+            ＋ Tambah Field
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Template Preview -->
+      <div class="form-section">
+        <div class="form-section-header">
+          <div class="section-icon">👁️</div>
+          <h3>Pratinjau Template (Baris Pertama)</h3>
+        </div>
+        <div class="form-section-body">
+          <textarea
+            id="template-preview"
+            placeholder="Preview akan tampil setelah template dan file diisi..."
+            rows="6"
+            disabled
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- 6. Delay Settings -->
+      <div class="form-section">
+        <div class="form-section-header">
+          <div class="section-icon">⏱️</div>
+          <h3>Pengaturan Delay</h3>
+        </div>
+        <div class="form-section-body">
+          <div class="delay-grid">
+            <div class="delay-item">
+              <label>Delay sebelum typing min (s)</label>
+              <input type="number" id="delay-typing-min" min="0" max="60" value="3">
+            </div>
+            <div class="delay-item">
+              <label>Delay sebelum typing max (s)</label>
+              <input type="number" id="delay-typing-max" min="0" max="60" value="11">
+            </div>
+            <div class="delay-item">
+              <label>Durasi typing min (s)</label>
+              <input type="number" id="delay-duration-min" min="0" max="120" value="10">
+            </div>
+            <div class="delay-item">
+              <label>Durasi typing max (s)</label>
+              <input type="number" id="delay-duration-max" min="0" max="120" value="39">
+            </div>
+            <div class="delay-item">
+              <label>Delay sebelum kirim min (s)</label>
+              <input type="number" id="delay-send-min" min="0" max="30" value="1">
+            </div>
+            <div class="delay-item">
+              <label>Delay sebelum kirim max (s)</label>
+              <input type="number" id="delay-send-max" min="0" max="30" value="4">
+            </div>
+            <div class="delay-item">
+              <label>Batch size (pesan)</label>
+              <input type="number" id="delay-batch-size" min="1" max="500" value="10">
+            </div>
+            <div class="delay-item">
+              <label>Batch rest (detik)</label>
+              <input type="number" id="delay-batch-rest" min="0" max="3600" value="300">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. Start Blast -->
+      <div class="blast-footer">
+        <div id="blast-status" class="blast-status">
+          <span class="bs-err">⚠ File belum dipilih</span>
+        </div>
+        <button id="btn-blast" class="btn-blast" disabled>
+          🚀 Mulai Blast
+        </button>
+      </div>
+
+      <!-- Blast Result -->
+      <div id="blast-result" class="hidden"></div>
+
+    </section>
+
+    <!-- ─── Tab: CSV Blast ─── -->
+    <section id="tab-csv" class="tab-pane">
+      <div class="coming-soon">
+        <span class="cs-icon">📁</span>
+        <h3>CSV Blast</h3>
+        <p>Fitur ini sedang dalam pengembangan. Segera hadir!</p>
+      </div>
+    </section>
+
+    <!-- ─── Tab: Outreach ─── -->
+    <section id="tab-outreach" class="tab-pane">
+      <div class="coming-soon">
+        <span class="cs-icon">🎯</span>
+        <h3>Outreach</h3>
+        <p>Fitur ini sedang dalam pengembangan. Segera hadir!</p>
+      </div>
+    </section>
+
+    <!-- ─── Tab: Simple Blast ─── -->
+    <section id="tab-simple" class="tab-pane">
+      <div class="coming-soon">
+        <span class="cs-icon">📨</span>
+        <h3>Simple Blast</h3>
+        <p>Fitur ini sedang dalam pengembangan. Segera hadir!</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" role="alert" aria-live="polite"></div>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>

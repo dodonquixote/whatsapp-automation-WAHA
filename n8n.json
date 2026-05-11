@@ -1,0 +1,760 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "VvGwJqxoQTUFgpDO",
+          "mode": "list",
+          "cachedResultName": "Konfirmasi alamat",
+          "cachedResultUrl": "/projects/cNEcgHUn7wQj6d9M/datatables/VvGwJqxoQTUFgpDO"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        288
+      ],
+      "id": "4dacfeb0-d013-4492-98e9-b445cffbd515",
+      "name": "Get Kreator List",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "0EDUEhxcte3I2Xpm",
+          "mode": "list",
+          "cachedResultName": "data template",
+          "cachedResultUrl": "/projects/cNEcgHUn7wQj6d9M/datatables/0EDUEhxcte3I2Xpm"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        16
+      ],
+      "id": "b74262d8-5157-475c-8d1e-c53bd9eb256f",
+      "name": "Get 5 Templates",
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const templates = $('Get 5 Templates').all();\nif (!templates.length) throw new Error('Tidak ada template');\n\nconst campaignData = $('On form submission').first().json;\nconst kreatorItems = $input.all();\nconst results = [];\n\nfor (const item of kreatorItems) {\n  const k = item.json;\n  \n  // ⛔ Skip jika status sudah 'sent'\n  if (k.status === 'sent') continue;\n  \n  const randomIndex = Math.floor(Math.random() * templates.length);\n  const templateText = templates[randomIndex].json.template;\n  \n  const templateData = {\n    username: k.USERNAME || '',\n    campaign: campaignData.campaign || '',\n    product: campaignData.produk || '',\n    komisi: campaignData.komisi || '',\n    sow: campaignData.sow || '',\n    link_affiliate: campaignData.link_affiliate || '',\n    namapenerima: k.NAMA_PENERIMA || '',\n    no: k.NO || '',\n    alamat: k.ALAMAT || '',\n    nama: $input.first().json.NAMA_PENERIMA || '',\n    link_grup: campaignData.link_group || ''\n  };\n  \n  const message = templateText.replace(/{{(\\w+)}}/g, (match, field) => {\n    return templateData[field] !== undefined ? templateData[field] : '';\n  });\n  \n  results.push({\n    chatId: (k.whatsapp ? k.whatsapp : ('62' + (k.NO || ''))) + '@c.us',\n    session: 'default',\n    message: message,\n    kreatorId: k.id,\n    nama: $input.first().json.NAMA_PENERIMA || ''\n  });\n}\n\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        64
+      ],
+      "id": "f03729cf-6d43-4a19-a15e-d6e57578f727",
+      "name": "Pilih Template Acak + Personalisasi",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "options": {
+          "reset": false
+        }
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        288,
+        64
+      ],
+      "id": "3a1e175d-5b35-4658-97ba-f692ad490594",
+      "name": "Loop per Batch (10 pesan)"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 8) + 3 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        64
+      ],
+      "id": "f678849e-9583-404d-b6ae-3b2213bced81",
+      "name": "Wait Sebelum Typing (3-11 detik)",
+      "webhookId": "1ed6eaaf-51ed-4d0c-864a-c5ef104b33d8"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 3) + 1 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        64
+      ],
+      "id": "e601d9a0-58b6-4045-b40f-d86a1ed0fe59",
+      "name": "Wait Sebelum Kirim (1-4 detik)",
+      "webhookId": "17cd1095-f993-4ef4-a003-e6df8934be6c"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Send Text",
+        "session": "={{ $('Loop per Batch (10 pesan)').item.json.session }}",
+        "chatId": "={{ $('Loop per Batch (10 pesan)').item.json.chatId }}",
+        "text": "={{ $('Loop per Batch (10 pesan)').item.json.message }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1488,
+        64
+      ],
+      "id": "11272d9f-93f0-4f41-a78e-9204b06181ff",
+      "name": "Send Text Message",
+      "credentials": {
+        "wahaApi": {
+          "id": "dDMiPIWl8pS9IUpK",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "VvGwJqxoQTUFgpDO",
+          "mode": "list",
+          "cachedResultName": "Konfirmasi alamat",
+          "cachedResultUrl": "/projects/cNEcgHUn7wQj6d9M/datatables/VvGwJqxoQTUFgpDO"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyValue": "={{ $('Pilih Template Acak + Personalisasi').item.json.kreatorId }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "sent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "USERAME",
+              "displayName": "USERAME",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "CATEGORY",
+              "displayName": "CATEGORY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "LINK_TIKTOK",
+              "displayName": "LINK_TIKTOK",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "FOLLOWERS",
+              "displayName": "FOLLOWERS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "GMV",
+              "displayName": "GMV",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "NO",
+              "displayName": "NO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ALAMAT",
+              "displayName": "ALAMAT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "NAMA_PENERIMA",
+              "displayName": "NAMA_PENERIMA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "APPROVAL",
+              "displayName": "APPROVAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "PRODUCT",
+              "displayName": "PRODUCT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Link_Affiliate",
+              "displayName": "Link_Affiliate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1680,
+        64
+      ],
+      "id": "c525ff32-b746-41c6-92a5-0cac49d5ca38",
+      "name": "Update Status Kreator (Tanda sudah dikirimi)"
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Start Typing",
+        "chatId": "={{ $json.chatId }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        688,
+        64
+      ],
+      "id": "dca08280-1600-4653-a17a-c77fb3c8b697",
+      "name": "Start Typing1",
+      "credentials": {
+        "wahaApi": {
+          "id": "dDMiPIWl8pS9IUpK",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Chatting",
+        "operation": "Stop Typing",
+        "session": "={{ $('Pilih Template Acak + Personalisasi').item.json.session }}",
+        "chatId": "={{ $('Pilih Template Acak + Personalisasi').item.json.chatId }}",
+        "requestOptions": {}
+      },
+      "type": "@devlikeapro/n8n-nodes-waha.WAHA",
+      "typeVersion": 202502,
+      "position": [
+        1088,
+        64
+      ],
+      "id": "35be5b6a-a35a-4f16-b78e-7fc64516e5d5",
+      "name": "Stop Typing1",
+      "credentials": {
+        "wahaApi": {
+          "id": "dDMiPIWl8pS9IUpK",
+          "name": "WAHA account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "formTitle": "Upload data kreator",
+        "formDescription": "Unggah file CSV atau Excel untuk menambah data kreator baru ke database",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "fileKreator",
+              "fieldType": "file",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "campaign",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "produk",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "komisi",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "sow",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "link_affiliate",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "link_group",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        -1072,
+        80
+      ],
+      "id": "656016cd-31b8-43a3-a471-d3c61641da7f",
+      "name": "On form submission",
+      "webhookId": "2f5d7c19-8083-4bb3-8876-04dfe31ffcab",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "={{ $binary.fileKreator }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -864,
+        80
+      ],
+      "id": "92899045-e831-4e6b-a0e7-1b03184a2fab",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -656,
+        80
+      ],
+      "id": "2d3e720a-0b71-4b75-bd66-153db8b50a72",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "VvGwJqxoQTUFgpDO",
+          "mode": "list",
+          "cachedResultName": "Konfirmasi alamat",
+          "cachedResultUrl": "/projects/cNEcgHUn7wQj6d9M/datatables/VvGwJqxoQTUFgpDO"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "CATEGORY": "={{ $json[\"CATEGORY\"] }}",
+            "LINK_TIKTOK": "={{ $json[\"LINK TIKTOK\"] }}",
+            "FOLLOWERS": "={{ $json[\"FOLLOWERS\"] }}",
+            "GMV": "={{ $json[\"GMV\"] }}",
+            "NO": "={{ $json[\"NO\"] }}",
+            "ALAMAT": "={{ $json[\"ALAMAT\"] }}",
+            "NAMA_PENERIMA": "={{ $json[\"NAMA PENERIMA\"] }}",
+            "USERNAME": "={{ $json.USERNAME}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "USERNAME",
+              "displayName": "USERNAME",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "CATEGORY",
+              "displayName": "CATEGORY",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "LINK_TIKTOK",
+              "displayName": "LINK_TIKTOK",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "FOLLOWERS",
+              "displayName": "FOLLOWERS",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "GMV",
+              "displayName": "GMV",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "NO",
+              "displayName": "NO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ALAMAT",
+              "displayName": "ALAMAT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "NAMA_PENERIMA",
+              "displayName": "NAMA_PENERIMA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "APPROVAL",
+              "displayName": "APPROVAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "PRODUCT",
+              "displayName": "PRODUCT",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Link_Affiliate",
+              "displayName": "Link_Affiliate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -384,
+        144
+      ],
+      "id": "d8a7dded-8634-4610-ba3d-e7a343246a04",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "amount": "={{ Math.floor(Math.random() * 30) + 10 }}"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        64
+      ],
+      "id": "84c58ae0-4d0c-42d7-b108-8904066cf636",
+      "name": "Wait Sambil Mengetik (2-6 detik)",
+      "webhookId": "cdfacf48-4126-4b12-ab16-5b0b7db8438c"
+    }
+  ],
+  "connections": {
+    "Get Kreator List": {
+      "main": [
+        [
+          {
+            "node": "Pilih Template Acak + Personalisasi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get 5 Templates": {
+      "main": [
+        [
+          {
+            "node": "Get Kreator List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pilih Template Acak + Personalisasi": {
+      "main": [
+        [
+          {
+            "node": "Loop per Batch (10 pesan)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop per Batch (10 pesan)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Wait Sebelum Typing (3-11 detik)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Sebelum Typing (3-11 detik)": {
+      "main": [
+        [
+          {
+            "node": "Start Typing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Sebelum Kirim (1-4 detik)": {
+      "main": [
+        [
+          {
+            "node": "Send Text Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Text Message": {
+      "main": [
+        [
+          {
+            "node": "Update Status Kreator (Tanda sudah dikirimi)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status Kreator (Tanda sudah dikirimi)": {
+      "main": [
+        [
+          {
+            "node": "Loop per Batch (10 pesan)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Typing1": {
+      "main": [
+        [
+          {
+            "node": "Wait Sambil Mengetik (2-6 detik)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stop Typing1": {
+      "main": [
+        [
+          {
+            "node": "Wait Sebelum Kirim (1-4 detik)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Get 5 Templates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Sambil Mengetik (2-6 detik)": {
+      "main": [
+        [
+          {
+            "node": "Stop Typing1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "54da34f867f8580cbc22f738fe8d096a4b6ca80a03e5fa45af1d723b3e8dac97"
+  }
+}
